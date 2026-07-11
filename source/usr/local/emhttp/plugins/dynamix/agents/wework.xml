@@ -13,8 +13,15 @@
     ############
     {0}
     ############
+    # Save notification body before $CONTENT gets overwritten by markdown string
+    BODY="$CONTENT"
     TITLE=$(printf '%b' "$TITLE")
     MESSAGE=$(printf '%b' "$MESSAGE")
+
+    # Timestamp fallback (test notifications lack it) + format
+    [ -z "$TIMESTAMP" ] && TIMESTAMP=$(date +%s)
+    TS=$(date -d @"${TIMESTAMP}" '+%Y-%m-%d %H:%M:%S' 2>/dev/null || date -r "${TIMESTAMP}" '+%Y-%m-%d %H:%M:%S' 2>/dev/null || echo "${TIMESTAMP}")
+    TIMESTAMP="$TS"
 
     case "$IMPORTANCE" in
         normal)  EMOJI="🔵" ;;
@@ -26,21 +33,19 @@
     # Read raw templates to know which fields are selected
     TITLE_TMPL=$(sed -n 's/^TITLE=//p' "$0" | head -1)
     MESSAGE_TMPL=$(sed -n 's/^MESSAGE=//p' "$0" | head -1)
-
-    # Helper: check if a field is included in the template
     has_field() { echo "$1" | grep -q "$2"; }
 
-    # ── Build title with labels ──────────────────
+    # ── Title ──
     TITLE_LINE=""
     has_field "$TITLE_TMPL" '$EVENT'       && TITLE_LINE="${TITLE_LINE}[${EVENT}] "
     has_field "$TITLE_TMPL" '$SUBJECT'     && TITLE_LINE="${TITLE_LINE}${SUBJECT}"
     has_field "$TITLE_TMPL" '$TIMESTAMP'   && TITLE_LINE="${TITLE_LINE} (${TIMESTAMP})"
     has_field "$TITLE_TMPL" '$DESCRIPTION' && TITLE_LINE="${TITLE_LINE} - ${DESCRIPTION}"
     has_field "$TITLE_TMPL" '$IMPORTANCE'  && TITLE_LINE="${TITLE_LINE} [${IMPORTANCE}]"
-    has_field "$TITLE_TMPL" '$CONTENT'     && TITLE_LINE="${TITLE_LINE} | ${CONTENT}"
+    has_field "$TITLE_TMPL" '$BODY'        && TITLE_LINE="${TITLE_LINE} | ${BODY}"
     [ -z "$TITLE_LINE" ] && TITLE_LINE="${SUBJECT}"
 
-    # ── Build message with labels ────────────────
+    # ── Message body (labeled fields) ──
     NL=$'\n'
     MSG=""
     has_field "$MESSAGE_TMPL" '$EVENT'       && MSG="${MSG}> **事件**: ${EVENT}${NL}"
@@ -48,17 +53,20 @@
     has_field "$MESSAGE_TMPL" '$TIMESTAMP'   && MSG="${MSG}> **时间**: ${TIMESTAMP}${NL}"
     has_field "$MESSAGE_TMPL" '$DESCRIPTION' && MSG="${MSG}> **说明**: ${DESCRIPTION}${NL}"
     has_field "$MESSAGE_TMPL" '$IMPORTANCE'  && MSG="${MSG}> **级别**: ${IMPORTANCE}${NL}"
-    has_field "$MESSAGE_TMPL" '$CONTENT'     && MSG="${MSG}> ${CONTENT}${NL}"
 
-    CONTENT="## ${EMOJI} [${IMPORTANCE}] ${APP_NAME}${NL}> ${TITLE_LINE}"
-
+    # ── Build markdown ──
+    MD="## ${EMOJI} [${IMPORTANCE}] ${APP_NAME}${NL}> ${TITLE_LINE}"
     if [ -n "$MSG" ]; then
-        CONTENT="${CONTENT}${NL}${MSG}"
+        MD="${MD}${NL}${MSG}"
     fi
 
-    has_field "$MESSAGE_TMPL" '$LINK' && [ -n "$LINK" ] && CONTENT="${CONTENT}> [查看详情](${LINK})${NL}"
+    # Free-text content always last (before link)
+    has_field "$MESSAGE_TMPL" '$CONTENT' && [ -n "$BODY" ] && MD="${MD}> ${BODY}${NL}"
 
-    ESCAPED=$(printf '%s' "$CONTENT" | sed ':a;N;$!ba;s/\\/\\\\/g;s/"/\\"/g;s/\n/\\n/g')
+    # Link
+    has_field "$MESSAGE_TMPL" '$LINK' && [ -n "$LINK" ] && MD="${MD}> [查看详情](${LINK})${NL}"
+
+    ESCAPED=$(printf '%s' "$MD" | sed ':a;N;$!ba;s/\\/\\\\/g;s/"/\\"/g;s/\n/\\n/g')
     PAYLOAD="{\"msgtype\":\"markdown_v2\",\"markdown_v2\":{\"content\":\"${ESCAPED}\"}}"
 
     curl -s -X POST \
