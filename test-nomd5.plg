@@ -1,0 +1,19 @@
+<?xml version="1.0" standalone="yes"?>
+<!DOCTYPE PLUGIN [
+<!ENTITY name "wework-test3">
+<!ENTITY version "2026.07.14">
+<!ENTITY pluginURL "https://raw.githubusercontent.com/Turbolento/wework-notify-unraid/master/test-nomd5.plg">
+<!ENTITY source "/boot/config/plugins/&name;/&name;">
+]>
+<PLUGIN name="&name;" author="Turbolento" version="&version;" launch="Settings/Notifications" pluginURL="&pluginURL;" min="6.12.0">
+
+<CHANGES>
+###&version;
+- Test with .txz, no MD5
+</CHANGES>
+
+<FILE Name="&source;.txz" Run="upgradepkg --install-new --reinstall">
+<URL>https://raw.githubusercontent.com/Turbolento/wework-notify-unraid/master/release/wework-notify.txz</URL>
+</FILE>
+
+</PLUGIN>
