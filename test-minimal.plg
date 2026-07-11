@@ -1,0 +1,20 @@
+<?xml version="1.0" standalone="yes"?>
+<!DOCTYPE PLUGIN [
+<!ENTITY name "wework-test">
+<!ENTITY version "2026.07.13">
+<!ENTITY pluginURL "https://raw.githubusercontent.com/Turbolento/wework-notify-unraid/master/test-minimal.plg">
+]>
+<PLUGIN name="&name;" author="Turbolento" version="&version;" launch="Settings/Notifications" pluginURL="&pluginURL;" min="6.12.0">
+
+<CHANGES>
+###&version;
+- Minimal test
+</CHANGES>
+
+<FILE Run="/bin/bash">
+<INLINE>
+echo "minimal test OK"
+</INLINE>
+</FILE>
+
+</PLUGIN>
