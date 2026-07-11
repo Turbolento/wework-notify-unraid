@@ -2,7 +2,7 @@
 <!DOCTYPE PLUGIN [
 <!ENTITY name "wework-notify">
 <!ENTITY author "Turbolento">
-<!ENTITY version "2026.07.24">
+<!ENTITY version "2026.07.25">
 <!ENTITY launch "Settings/Notifications">
 <!ENTITY pluginURL "https://raw.githubusercontent.com/Turbolento/wework-notify-unraid/master/wework-notify.plg">
 <!ENTITY packageURL "https://raw.githubusercontent.com/Turbolento/wework-notify-unraid/master/release/wework-notify.txz">
@@ -40,8 +40,8 @@ rm -f /boot/config/plugins/dynamix/notifications/agents/wework.sh
 rm -f /boot/config/plugins/dynamix/notifications/agents-disabled/wework
 rm -f /boot/config/plugins/dynamix/notifications/agents-disabled/wework.sh
 # Fresh initial agent (disabled, user enables via UI)
-cp /usr/local/emhttp/plugins/&name;/wework.sh.default /boot/config/plugins/dynamix/notifications/agents-disabled/wework.sh
-chmod +x /boot/config/plugins/dynamix/notifications/agents-disabled/wework.sh
+# XML (wework.xml) is the single source for the agent script.
+# No .sh pre-created -- user clicks Apply in UI to generate from XML.
 
 echo ""
 echo "-----------------------------------------------------------"

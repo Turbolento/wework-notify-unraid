@@ -5,7 +5,7 @@ Forward Unraid system notifications to WeWork (企业微信) group chats via web
 **Setup:**
 
 1. In WeWork group chat, add a webhook robot and copy the webhook URL
-2. Go to **Settings → Notification Settings → Notification Agents → WeWork**
+2. Go to **Settings -> Notification Settings -> Notification Agents -> WeWork**
 3. Set Agent function to **Enabled**
 4. Fill in your **WebHook URL** and **Application Name**
 5. Configure **Notification Title** and **Notification Message** field selections
