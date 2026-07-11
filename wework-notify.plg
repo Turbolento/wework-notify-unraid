@@ -2,7 +2,7 @@
 <!DOCTYPE PLUGIN [
 <!ENTITY name "wework-notify">
 <!ENTITY author "Turbolento">
-<!ENTITY version "2026.07.15">
+<!ENTITY version "2026.07.17">
 <!ENTITY launch "Settings/Notifications">
 <!ENTITY pluginURL "https://raw.githubusercontent.com/Turbolento/wework-notify-unraid/master/wework-notify.plg">
 <!ENTITY packageURL "https://raw.githubusercontent.com/Turbolento/wework-notify-unraid/master/release/wework-notify.txz">
@@ -30,6 +30,10 @@
 <!-- PRE-INSTALL: create directories -->
 <FILE Run="/bin/bash">
 <INLINE>
+# Clean stale registration cache (fixes web UI reinstall blocking)
+rm -f /var/log/plugins/&name;.plg
+rm -f /var/log/plugins/&name;.txz
+rm -f /var/log/plugins/&name;.md5
 mkdir -p /boot/config/plugins/&name;
 mkdir -p /boot/config/plugins/dynamix/notifications/agents
 mkdir -p /boot/config/plugins/dynamix/notifications/agents-disabled
@@ -73,6 +77,9 @@ echo ""
 <INLINE>
 # Remove installed package
 removepkg &name; 2>/dev/null
+rm -f /var/log/plugins/&name;.plg
+rm -f /var/log/plugins/&name;.txz
+rm -f /var/log/plugins/&name;.md5
 
 # Remove agent scripts (both .sh and extensionless formats)
 # Agent .sh files preserved during upgrade (contain user settings)
