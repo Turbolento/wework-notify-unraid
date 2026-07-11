@@ -6,7 +6,7 @@
 <!ENTITY launch "Settings/Notifications">
 <!ENTITY pluginURL "https://raw.githubusercontent.com/Turbolento/wework-notify-unraid/master/wework-notify.plg">
 <!ENTITY packageURL "https://raw.githubusercontent.com/Turbolento/wework-notify-unraid/master/release/wework-notify.txz">
-<!ENTITY packageMD5 "84c8d4d8f937e954aeb54dd2c6ac364b">
+<!ENTITY packageMD5 "849380ac07996c51931a0dac23f93aaa">
 <!ENTITY source "/boot/config/plugins/&name;/&name;">
 ]>
 <PLUGIN name="&name;" author="&author;" version="&version;" launch="&launch;" pluginURL="&pluginURL;" icon="wework-notify.png" min="6.12.0" support="https://forums.unraid.net/" project="https://github.com/Turbolento/wework-notify-unraid">

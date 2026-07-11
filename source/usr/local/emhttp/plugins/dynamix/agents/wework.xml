@@ -18,20 +18,20 @@
     MESSAGE=$(printf '%b' "$MESSAGE")
 
     case "$IMPORTANCE" in
-        normal)  EMOJI="🔵" COLOR="info" ;;
-        warning) EMOJI="⚠️" COLOR="warning" ;;
-        alert)   EMOJI="🚨" COLOR="warning" ;;
-        *)       EMOJI="🔵" COLOR="info" ;;
+        normal)  EMOJI="🔵" ;;
+        warning) EMOJI="⚠️" ;;
+        alert)   EMOJI="🚨" ;;
+        *)       EMOJI="🔵" ;;
     esac
 
     # Title: collapse to single line
     TITLE_LINE=$(printf '%s' "$TITLE" | tr '\n' ' ' | sed 's/  */ /g; s/^ *//; s/ *$//')
 
-    # Build content with actual newlines (use $'\n' so sed can later re-encode them for JSON)
     NL=$'\n'
 
-    # Heading
-    CONTENT="## ${EMOJI} ${APP_NAME}${NL}> <font color=\"${COLOR}\"><b>[${IMPORTANCE}]</b></font> ${TITLE_LINE}"
+    # Build markdown_v2 content (no HTML tags — markdown_v2 does not support <font>)
+    # Heading: emoji + app name + importance
+    CONTENT="## ${EMOJI} [${IMPORTANCE}] ${APP_NAME}${NL}> ${TITLE_LINE}"
 
     # Message body: prefix each non-empty line with "> "
     if [ -n "$MESSAGE" ]; then
@@ -41,10 +41,10 @@
 
     # Link
     if [ -n "$LINK" ]; then
-        CONTENT="${CONTENT}${NL}${NL}> [查看详情](${LINK})"
+        CONTENT="${CONTENT}${NL}>${NL}> [查看详情](${LINK})"
     fi
 
-    # JSON-encode: escape \ and ", then convert real newlines to \n for JSON transport
+    # JSON-encode
     ESCAPED=$(printf '%s' "$CONTENT" | sed ':a;N;$!ba;s/\\/\\\\/g;s/"/\\"/g;s/\n/\\n/g')
     PAYLOAD="{\"msgtype\":\"markdown_v2\",\"markdown_v2\":{\"content\":\"${ESCAPED}\"}}"
 

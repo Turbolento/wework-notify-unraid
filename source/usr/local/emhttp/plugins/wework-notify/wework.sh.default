@@ -9,16 +9,16 @@ TITLE=$(printf '%b' "$TITLE")
 MESSAGE=$(printf '%b' "$MESSAGE")
 
 case "$IMPORTANCE" in
-    normal)  EMOJI="🔵" COLOR="info" ;;
-    warning) EMOJI="⚠️" COLOR="warning" ;;
-    alert)   EMOJI="🚨" COLOR="warning" ;;
-    *)       EMOJI="🔵" COLOR="info" ;;
+    normal)  EMOJI="🔵" ;;
+    warning) EMOJI="⚠️" ;;
+    alert)   EMOJI="🚨" ;;
+    *)       EMOJI="🔵" ;;
 esac
 
 TITLE_LINE=$(printf '%s' "$TITLE" | tr '\n' ' ' | sed 's/  */ /g; s/^ *//; s/ *$//')
 NL=$'\n'
 
-CONTENT="## ${EMOJI} ${APP_NAME}${NL}> <font color=\"${COLOR}\"><b>[${IMPORTANCE}]</b></font> ${TITLE_LINE}"
+CONTENT="## ${EMOJI} [${IMPORTANCE}] ${APP_NAME}${NL}> ${TITLE_LINE}"
 
 if [ -n "$MESSAGE" ]; then
     MSG_FORMATTED=$(printf '%s' "$MESSAGE" | sed '/./s/^/> /')
@@ -26,7 +26,7 @@ if [ -n "$MESSAGE" ]; then
 fi
 
 if [ -n "$LINK" ]; then
-    CONTENT="${CONTENT}${NL}${NL}> [查看详情](${LINK})"
+    CONTENT="${CONTENT}${NL}>${NL}> [查看详情](${LINK})"
 fi
 
 ESCAPED=$(printf '%s' "$CONTENT" | sed ':a;N;$!ba;s/\\/\\\\/g;s/"/\\"/g;s/\n/\\n/g')
