@@ -24,8 +24,8 @@
     esac
 
     # Read raw templates to know which fields are selected
-    TITLE_TMPL=$(sed -n 's/^TITLE=//p' "$0" | tail -1)
-    MESSAGE_TMPL=$(sed -n 's/^MESSAGE=//p' "$0" | tail -1)
+    TITLE_TMPL=$(sed -n 's/^TITLE=//p' "$0" | head -1)
+    MESSAGE_TMPL=$(sed -n 's/^MESSAGE=//p' "$0" | head -1)
 
     # Helper: check if a field is included in the template
     has_field() { echo "$1" | grep -q "$2"; }
