@@ -4,7 +4,7 @@
 <!ENTITY author "Turbolento">
 <!ENTITY version "2026.07.20">
 <!ENTITY launch "Settings/Notifications">
-<!ENTITY pluginURL "https://raw.githubusercontent.com/Turbolento/wework-notify-unraid/master/wework-notify.plg">
+<!ENTITY pluginURL "https://raw.githubusercontent.com/Turbolento/wework-notify-unraid/master/wework-notify.plg?v=2026.07.20">
 <!ENTITY packageURL "https://raw.githubusercontent.com/Turbolento/wework-notify-unraid/master/release/wework-notify.txz">
 <!ENTITY source "/boot/config/plugins/&name;/&name;">
 ]>
