@@ -16,9 +16,9 @@
 
 ###&version;
 - Architecture: XML-based agent definition (native integration with Notification Agents page)
-- Configurable via Settings → Notification Settings → Notification Agents → WeWork
+- Configurable via Settings -> Notification Settings -> Notification Agents -> WeWork
 - Supports title/message field selection (Event, Subject, Timestamp, Description, Importance, Content, Link)
-- Markdown_v2 format with importance emoji (🔵 normal / ⚠️ warning / 🚨 alert)
+- Markdown_v2 format with importance emoji ([normal] [warning] [alert])
 - Zero dependencies (curl-based)
 
 ###2026.07.11b
@@ -52,7 +52,7 @@ rm -f /usr/local/emhttp/plugins/&name;/wework-notify.settings.page
 rm -f /usr/local/emhttp/plugins/&name;/test.php
 rm -f /usr/local/emhttp/plugins/&name;/default.cfg
 rm -f /boot/config/plugins/&name;/&name;.cfg
-# Note: no initial .sh file — the Notification Agents page creates it on first Apply.
+# Note: no initial .sh file -- the Notification Agents page creates it on first Apply.
 # This keeps the UI clean (no Delete button until user explicitly creates the agent).
 
 echo ""
@@ -60,7 +60,7 @@ echo "-----------------------------------------------------------"
 echo " WeWork Notification Agent has been installed."
 echo " Version: &version;"
 echo ""
-echo " 1. Go to Settings → Notification Settings → Notification Agents"
+echo " 1. Go to Settings -> Notification Settings -> Notification Agents"
 echo " 2. Find 'WeWork' in the list"
 echo " 3. Set Agent function to 'Enabled'"
 echo " 4. Fill in your WebHook URL and click Apply"
