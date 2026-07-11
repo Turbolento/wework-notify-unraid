@@ -12,6 +12,8 @@ if [ "$EVENT" = "$SUBJECT" ] && [ "$SUBJECT" = "$DESCRIPTION" ]; then
     CONTENT="All disks mounted normally. Parity is valid."
     IMPORTANCE="normal"
     TIMESTAMP="${TIMESTAMP:-$(date +%s)}"
+    TITLE="$SUBJECT"
+    MESSAGE="$DESCRIPTION"
 fi
 
 TITLE=$(printf '%b' "$TITLE")

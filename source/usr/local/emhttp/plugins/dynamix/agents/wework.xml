@@ -21,9 +21,12 @@
         CONTENT="All disks mounted normally. Parity is valid."
         IMPORTANCE="normal"
         TIMESTAMP="${TIMESTAMP:-$(date +%s)}"
+        # Override TITLE/MESSAGE which were set from old env vars by the config
+        TITLE="$SUBJECT"
+        MESSAGE="$DESCRIPTION"
     fi
 
-    # Expand \n sequences in config values to actual newlines
+    # Expand \n sequences to actual newlines
     TITLE=$(printf '%b' "$TITLE")
     MESSAGE=$(printf '%b' "$MESSAGE")
 
