@@ -13,17 +13,20 @@
     ############
     {0}
     ############
-    # If this is a test run (EVENT=SUBJECT=DESCRIPTION="X test."), fake real data
+    # If this is a test run (EVENT=SUBJECT=DESCRIPTION all "X test."), fake real data
     if [ "$EVENT" = "$SUBJECT" ] && [ "$SUBJECT" = "$DESCRIPTION" ]; then
         EVENT="Array Start"
         SUBJECT="Array started successfully"
-        DESCRIPTION="Array has been started"
+        DESCRIPTION="Array has been started successfully"
         CONTENT="All disks mounted normally. Parity is valid."
         IMPORTANCE="normal"
         TIMESTAMP="${TIMESTAMP:-$(date +%s)}"
-        # Override TITLE/MESSAGE which were set from old env vars by the config
-        TITLE="$SUBJECT"
-        MESSAGE="$DESCRIPTION"
+        # Re-evaluate TITLE/MESSAGE from raw config templates with fake vars
+        # (they were expanded with old env values during config sourcing)
+        TITLE_TMPL=$(sed -n 's/^TITLE=//p' "$0" | tail -1)
+        MESSAGE_TMPL=$(sed -n 's/^MESSAGE=//p' "$0" | tail -1)
+        [ -n "$TITLE_TMPL" ] && TITLE=$(eval echo -e "$TITLE_TMPL")
+        [ -n "$MESSAGE_TMPL" ] && MESSAGE=$(eval echo -e "$MESSAGE_TMPL")
     fi
 
     # Expand \n sequences to actual newlines

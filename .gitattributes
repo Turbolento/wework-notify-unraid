@@ -1,0 +1,8 @@
+*.sh text eol=lf
+*.sh.default text eol=lf
+*.sh.body text eol=lf
+*.xml text eol=lf
+*.page text eol=lf
+*.php text eol=lf
+*.cfg text eol=lf
+*.plg text eol=lf
