@@ -1,0 +1,78 @@
+#!/bin/bash
+# WeWork Notification Agent for Unraid
+# Receives notification data via environment variables from Unraid's notify system
+# Sends to WeWork (企业微信) group chat via webhook using markdown_v2 format
+
+# ── Guard: subject is required ──────────────────────────────────
+if [ -z "$SUBJECT" ]; then
+    exit 0
+fi
+
+# ── Read webhook URL from config ────────────────────────────────
+CONFIG_FILE="/boot/config/plugins/wework-notify/wework-notify.cfg"
+if [ ! -f "$CONFIG_FILE" ]; then
+    exit 0
+fi
+
+# Source the config file to get WEWORK_WEBHOOK_URL
+. "$CONFIG_FILE"
+
+if [ -z "$WEWORK_WEBHOOK_URL" ]; then
+    exit 0
+fi
+
+# ── Store message body under a different name to avoid ──────────
+# ── clashing with the MD_CONTENT variable we build below ────────
+MESSAGE_BODY="$CONTENT"
+
+# ── Map importance to emoji ─────────────────────────────────────
+case "$IMPORTANCE" in
+    normal)  EMOJI="🔵" ;;
+    warning) EMOJI="⚠️" ;;
+    alert)   EMOJI="🚨" ;;
+    *)       EMOJI="🔵" ;;
+esac
+
+# ── Build markdown_v2 content ───────────────────────────────────
+# Start with header: emoji + importance + subject
+MD_CONTENT="## ${EMOJI} [${IMPORTANCE:-normal}] ${SUBJECT}"
+
+# Append event line if present
+if [ -n "$EVENT" ]; then
+    MD_CONTENT="${MD_CONTENT}\n> **事件**: ${EVENT}"
+fi
+
+# Append description line if present
+if [ -n "$DESCRIPTION" ]; then
+    MD_CONTENT="${MD_CONTENT}\n> **描述**: ${DESCRIPTION}"
+fi
+
+# Append message body if present
+if [ -n "$MESSAGE_BODY" ]; then
+    MD_CONTENT="${MD_CONTENT}\n> ${MESSAGE_BODY}"
+fi
+
+# Append link if present
+if [ -n "$LINK" ]; then
+    MD_CONTENT="${MD_CONTENT}\n> [查看详情](${LINK})"
+fi
+
+# ── JSON-escape the content string ──────────────────────────────
+# Escape backslash, double-quote, newline for JSON string
+JSON_CONTENT=$(printf '%s' "$MD_CONTENT" | sed \
+    -e 's/\\/\\\\/g' \
+    -e 's/"/\\"/g' \
+    -e ':a' -e 'N' -e '$!ba' -e 's/\n/\\n/g')
+
+# ── Build and send the payload ──────────────────────────────────
+PAYLOAD="{\"msgtype\":\"markdown_v2\",\"markdown_v2\":{\"content\":\"${JSON_CONTENT}\"}}"
+
+curl -s -X POST \
+    -H "Content-Type: application/json" \
+    -d "$PAYLOAD" \
+    --connect-timeout 5 \
+    --max-time 10 \
+    "$WEWORK_WEBHOOK_URL" > /dev/null 2>&1
+
+# Always exit 0 — never block the notification pipeline
+exit 0

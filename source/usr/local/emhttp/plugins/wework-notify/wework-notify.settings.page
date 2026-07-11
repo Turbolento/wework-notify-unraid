@@ -1,0 +1,63 @@
+Menu="Settings"
+Title="WeWork Notify"
+Icon="wechat"
+Tag="notification"
+---
+<?php
+$plugin = "wework-notify";
+$cfg = parse_plugin_cfg($plugin);
+?>
+
+<form markdown="1" method="POST" action="/update.php" target="progressFrame">
+<input type="hidden" name="#file" value="<?=$plugin?>/<?=$plugin?>.cfg">
+
+_(Webhook URL)_:
+: <input type="text" name="WEWORK_WEBHOOK_URL" value="<?=htmlspecialchars($cfg['WEWORK_WEBHOOK_URL'] ?? '')?>" placeholder="https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=...">
+
+<blockquote class="inline_help">
+Copy the webhook URL from your WeWork group chat robot settings.
+Format: <code>https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=YOUR_KEY</code>
+</blockquote>
+
+<hr>
+
+<button type="button" onclick="testNotification()">_(Test Notification)_</button>
+<span id="testResult" style="margin-left:12px;font-weight:600;"></span>
+
+<script>
+function testNotification() {
+    var url = document.getElementsByName('WEWORK_WEBHOOK_URL')[0].value;
+    if (!url) {
+        document.getElementById('testResult').innerHTML = '<span style="color:#e68a00;">Please enter a webhook URL first</span>';
+        return;
+    }
+    document.getElementById('testResult').innerHTML = '<span style="color:#0078d4;">Sending test...</span>';
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', '/plugins/wework-notify/test.php', true);
+    xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+    xhr.onload = function() {
+        if (xhr.status === 200) {
+            try {
+                var resp = JSON.parse(xhr.responseText);
+                if (resp.errcode === 0) {
+                    document.getElementById('testResult').innerHTML = '<span style="color:#107c10;">Test sent successfully! Check WeWork</span>';
+                } else {
+                    document.getElementById('testResult').innerHTML = '<span style="color:#d13438;">WeWork returned error: ' + resp.errmsg + '</span>';
+                }
+            } catch(e) {
+                document.getElementById('testResult').innerHTML = '<span style="color:#d13438;">Failed to parse response</span>';
+            }
+        } else {
+            document.getElementById('testResult').innerHTML = '<span style="color:#d13438;">Connection failed (HTTP ' + xhr.status + ')</span>';
+        }
+    };
+    xhr.onerror = function() {
+        document.getElementById('testResult').innerHTML = '<span style="color:#d13438;">Network error - check webhook URL</span>';
+    };
+    xhr.send('url=' + encodeURIComponent(url));
+}
+</script>
+
+<input type="submit" name="#default" value="_(Default)_">
+: <input type="submit" name="#apply" value="_(Apply)_" disabled><input type="button" value="_(Done)_" onclick="done()">
+</form>

@@ -1,0 +1,84 @@
+<?xml version="1.0" standalone="yes"?>
+<!DOCTYPE PLUGIN [
+<!ENTITY name "wework-notify">
+<!ENTITY author "jaln1">
+<!ENTITY version "2026.07.11">
+<!ENTITY launch "Settings/Notifications">
+<!ENTITY pluginURL "https://raw.githubusercontent.com/jaln1/wework-notify-unraid/main/wework-notify.plg">
+<!ENTITY packageURL "https://raw.githubusercontent.com/jaln1/wework-notify-unraid/main/release/wework-notify.txz">
+<!ENTITY source "/boot/config/plugins/&name;/&name;">
+]>
+<PLUGIN name="&name;" author="&author;" version="&version;" launch="&launch;" pluginURL="&pluginURL;" icon="wework-notify.png" min="6.12.0" support="https://forums.unraid.net/" project="https://github.com/jaln1/wework-notify-unraid">
+
+<CHANGES>
+## WeWork Notification Agent for Unraid
+
+###&version;
+- Initial release
+- Forwards Unraid system notifications to WeWork (企业微信) via webhook
+- Supports markdown_v2 format with importance-based emoji indicators
+- Zero dependencies (curl-based)
+- Settings page with webhook URL configuration and test button
+</CHANGES>
+
+<!-- PRE-INSTALL: create directories -->
+<FILE Run="/bin/bash">
+<INLINE>
+mkdir -p /boot/config/plugins/&name;
+mkdir -p /boot/config/plugins/dynamix/notifications/agents
+mkdir -p /boot/config/plugins/dynamix/notifications/agents-disabled
+</INLINE>
+</FILE>
+
+<!-- SOURCE PACKAGE -->
+<FILE Name="&source;.txz" Run="upgradepkg --install-new --reinstall">
+<URL>&packageURL;</URL>
+</FILE>
+
+<!-- POST-INSTALL: deploy agent script -->
+<FILE Run="/bin/bash">
+<INLINE>
+# Copy agent script to notification agents directory
+cp /usr/local/emhttp/plugins/&name;/agent/wework /boot/config/plugins/dynamix/notifications/agents/wework
+chmod +x /boot/config/plugins/dynamix/notifications/agents/wework
+
+# Initialize user config from default if not present
+if [ ! -f /boot/config/plugins/&name;/&name;.cfg ]; then
+    cp /usr/local/emhttp/plugins/&name;/default.cfg /boot/config/plugins/&name;/&name;.cfg
+fi
+
+echo ""
+echo "-----------------------------------------------------------"
+echo " WeWork Notification Agent has been installed."
+echo " Version: &version;"
+echo ""
+echo " 1. Go to Settings → WeWork Notify"
+echo " 2. Enter your WeWork webhook URL"
+echo " 3. Click 'Test Notification' to verify"
+echo "-----------------------------------------------------------"
+echo ""
+</INLINE>
+</FILE>
+
+<!-- REMOVE SCRIPT -->
+<FILE Run="/bin/bash" Method="remove">
+<INLINE>
+# Remove installed package
+removepkg &name; 2>/dev/null
+
+# Remove agent scripts
+rm -f /boot/config/plugins/dynamix/notifications/agents/wework
+rm -f /boot/config/plugins/dynamix/notifications/agents-disabled/wework
+
+echo ""
+echo "-----------------------------------------------------------"
+echo " WeWork Notification Agent has been removed."
+echo " Configuration preserved at:"
+echo "   /boot/config/plugins/&name;/"
+echo " Delete that folder to fully remove all settings."
+echo "-----------------------------------------------------------"
+echo ""
+</INLINE>
+</FILE>
+
+</PLUGIN>
