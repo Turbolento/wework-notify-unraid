@@ -1,0 +1,100 @@
+<?xml version="1.0" standalone="yes"?>
+<!DOCTYPE PLUGIN [
+<!ENTITY name "wework-notify2">
+<!ENTITY author "Turbolento">
+<!ENTITY version "2026.07.16">
+<!ENTITY launch "Settings/Notifications">
+<!ENTITY pluginURL "https://raw.githubusercontent.com/Turbolento/wework-notify-unraid/master/wework-notify-v2.plg">
+<!ENTITY packageURL "https://raw.githubusercontent.com/Turbolento/wework-notify-unraid/master/release/wework-notify.txz">
+<!ENTITY source "/boot/config/plugins/&name;/&name;">
+]>
+<PLUGIN name="&name;" author="&author;" version="&version;" launch="&launch;" pluginURL="&pluginURL;" icon="wework-notify.png" min="6.12.0" support="https://forums.unraid.net/" project="https://github.com/Turbolento/wework-notify-unraid">
+
+<CHANGES>
+## WeWork Notification Agent for Unraid
+
+###&version;
+- Architecture: XML-based agent definition (native integration with Notification Agents page)
+- Configurable via Settings -> Notification Settings -> Notification Agents -> WeWork
+- Supports title/message field selection (Event, Subject, Timestamp, Description, Importance, Content, Link)
+- Markdown_v2 format with importance emoji ([normal] [warning] [alert])
+- Zero dependencies (curl-based)
+
+###2026.07.11b
+- Settings page matching built-in agent format
+
+###2026.07.11
+- Initial release
+</CHANGES>
+
+<!-- PRE-INSTALL: create directories -->
+<FILE Run="/bin/bash">
+<INLINE>
+mkdir -p /boot/config/plugins/&name;
+mkdir -p /boot/config/plugins/dynamix/notifications/agents
+mkdir -p /boot/config/plugins/dynamix/notifications/agents-disabled
+</INLINE>
+</FILE>
+
+<!-- SOURCE PACKAGE -->
+<FILE Name="&source;.txz" Run="upgradepkg --install-new --reinstall">
+<URL>&packageURL;</URL>
+</FILE>
+
+<!-- POST-INSTALL: create initial disabled agent -->
+<FILE Run="/bin/bash">
+<INLINE>
+# Clean up old v1/v2 files from previous installs
+rm -f /boot/config/plugins/dynamix/notifications/agents/wework
+rm -f /usr/local/emhttp/plugins/&name;/wework-notify.settings.page
+rm -f /usr/local/emhttp/plugins/&name;/test.php
+rm -f /usr/local/emhttp/plugins/&name;/default.cfg
+rm -f /boot/config/plugins/&name;/&name;.cfg
+# Note: no initial .sh file -- the Notification Agents page creates it on first Apply.
+# This keeps the UI clean (no Delete button until user explicitly creates the agent).
+
+echo ""
+echo "-----------------------------------------------------------"
+echo " WeWork Notification Agent has been installed."
+echo " Version: &version;"
+echo ""
+echo " 1. Go to Settings -> Notification Settings -> Notification Agents"
+echo " 2. Find 'WeWork' in the list"
+echo " 3. Set Agent function to 'Enabled'"
+echo " 4. Fill in your WebHook URL and click Apply"
+echo " 5. Use 'Test' button to verify"
+echo "-----------------------------------------------------------"
+echo ""
+</INLINE>
+</FILE>
+
+<!-- REMOVE SCRIPT -->
+<FILE Run="/bin/bash" Method="remove">
+<INLINE>
+# Remove installed package
+removepkg &name; 2>/dev/null
+
+# Remove agent scripts (both .sh and extensionless formats)
+# Agent .sh files preserved during upgrade (contain user settings)
+# Only remove old extensionless format from v1
+rm -f /boot/config/plugins/dynamix/notifications/agents/wework
+rm -f /boot/config/plugins/dynamix/notifications/agents-disabled/wework
+
+# Remove XML definition
+rm -f /usr/local/emhttp/plugins/dynamix/agents/wework.xml
+
+# Remove icon
+rm -f /usr/local/emhttp/plugins/dynamix/icons/wework.png
+
+echo ""
+echo "-----------------------------------------------------------"
+echo " WeWork Notification Agent has been removed."
+echo " Configuration preserved at:"
+echo "   /boot/config/plugins/&name;/"
+echo " Delete that folder to fully remove all settings."
+echo "-----------------------------------------------------------"
+echo ""
+</INLINE>
+</FILE>
+
+</PLUGIN>
