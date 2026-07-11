@@ -4,13 +4,30 @@
 
 ## 安装
 
-在 Unraid Web UI 中：
-1. **Plugins → Install Plugin**
-2. 粘贴以下 URL：
-   ```
-   https://raw.githubusercontent.com/Turbolento/wework-notify-unraid/master/wework-notify.plg
-   ```
-3. 点击 **Install**
+在 Unraid Web UI 中：**Plugins → Install Plugin** → 粘贴：
+
+```
+https://raw.githubusercontent.com/Turbolento/wework-notify-unraid/master/wework-notify.plg
+```
+
+### 如果 Web UI 安装无响应
+
+HTTP 代理缓存导致。用 SOCKS5 代理下载后本地安装：
+
+```bash
+plugin remove wework-notify.plg 2>/dev/null
+rm -f /var/log/plugins/wework-notify.*
+
+curl -s --proxy socks5://172.16.1.5:7890 \
+  "https://raw.githubusercontent.com/Turbolento/wework-notify-unraid/master/wework-notify.plg" \
+  -o /boot/config/plugins/wework-notify.plg
+
+curl -s --proxy socks5://172.16.1.5:7890 \
+  "https://raw.githubusercontent.com/Turbolento/wework-notify-unraid/master/release/wework-notify.txz" \
+  -o /boot/config/plugins/wework-notify/wework-notify.txz
+
+plugin install /boot/config/plugins/wework-notify.plg
+```
 
 ## 配置
 
@@ -23,36 +40,49 @@
 
 ## 获取 Webhook URL
 
-1. 打开企业微信群聊
-2. 点击 `...` → **群机器人**
-3. 添加机器人，复制 webhook 地址
-4. 格式：`https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=YOUR_KEY`
+1. 打开企业微信群聊 → `...` → **群机器人** → 添加机器人
+2. 复制 webhook 地址，格式：`https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=YOUR_KEY`
 
 ## 消息格式
 
-使用 markdown_v2 格式，重要性用 emoji 区分：
+markdown_v2，各字段带标签前缀，重要性 emoji 区分：
 
-| 级别 | emoji | 说明 |
-|------|-------|------|
-| normal | 🔵 | 普通信息 |
-| warning | ⚠️ | 需关注的问题 |
-| alert | 🚨 | 严重错误 |
+| 级别 | emoji |
+|------|-------|
+| normal | 🔵 |
+| warning | ⚠️ |
+| alert | 🚨 |
 
-支持在标题和正文中自由选择显示哪些字段（事件、主题、时间戳、说明、重要性、内容、链接）。
+示例输出：
+
+```markdown
+## 🔵 [normal] Unraid Server
+> Array started successfully
+> **事件**: Array Start
+> **时间**: 2026-07-11 18:30:00
+> **说明**: Array has been started
+> **级别**: normal
+> [查看详情](http://tower.local/Main)
+```
+
+> 标签前缀自动跟随你在 UI 中的字段选择。
+
+## 更新
+
+```bash
+plugin remove wework-notify.plg
+rm -f /var/log/plugins/wework-notify.*
+# 用上面的 SOCKS5 方式重新下载安装，或直接 Web UI 粘贴 PLG URL
+```
+
+更新后需在 Notification Agents 页面点击 **Apply** 使最新脚本生效。
 
 ## 卸载
 
-**Settings → Notification Settings → Notification Agents → WeWork → Delete**
+**Settings → Notification Settings → Notification Agents → WeWork → Delete**，或：
 
-或命令行：
 ```bash
 plugin remove wework-notify.plg
-```
-
-## 手动安装
-
-```bash
-plugin install https://raw.githubusercontent.com/Turbolento/wework-notify-unraid/master/wework-notify.plg
 ```
 
 ## 要求
