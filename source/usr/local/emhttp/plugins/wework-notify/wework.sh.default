@@ -1,0 +1,39 @@
+#!/bin/bash
+############
+WEBH_URL="USE YOUR OWN WEBHOOK VALUE HERE"
+APP_NAME="Unraid Server"
+TITLE="$SUBJECT"
+MESSAGE="$DESCRIPTION"
+############
+TITLE=$(echo -e "$TITLE")
+MESSAGE=$(echo -e "$MESSAGE")
+
+case "$IMPORTANCE" in
+    normal)  EMOJI="🔵" ;;
+    warning) EMOJI="⚠️" ;;
+    alert)   EMOJI="🚨" ;;
+    *)       EMOJI="🔵" ;;
+esac
+
+MD="## ${EMOJI} ${APP_NAME}\n> ${TITLE}"
+
+if [ -n "$MESSAGE" ]; then
+    MD="${MD}\n${MESSAGE}"
+fi
+
+if [ -n "$LINK" ]; then
+    MD="${MD}\n> [查看详情](${LINK})"
+fi
+
+JSON=$(printf '%s' "$MD" | sed \
+    -e 's/\\/\\\\/g' \
+    -e 's/"/\\"/g' \
+    -e ':a' -e 'N' -e '$!ba' -e 's/\n/\\n/g')
+
+curl -s -X POST \
+    -H "Content-Type: application/json" \
+    -d "{\"msgtype\":\"markdown_v2\",\"markdown_v2\":{\"content\":\"${JSON}\"}}" \
+    --connect-timeout 5 --max-time 10 \
+    "$WEBH_URL" > /dev/null 2>/dev/null
+
+exit 0
