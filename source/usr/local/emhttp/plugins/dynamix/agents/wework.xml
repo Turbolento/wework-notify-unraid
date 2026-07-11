@@ -29,7 +29,7 @@
     CONTENT="## ${EMOJI} [${IMPORTANCE}] ${APP_NAME}${NL}> ${TITLE_LINE}"
 
     if [ -n "$MESSAGE" ]; then
-        MSG_FORMATTED=$(printf '%s' "$MESSAGE" | sed '/./s/^/> /')
+        MSG_FORMATTED=$(printf '%s' "$MESSAGE" | sed '/^$/d; /./s/^/> /')
         CONTENT="${CONTENT}${NL}${MSG_FORMATTED}"
     fi
 
