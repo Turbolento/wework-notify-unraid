@@ -23,19 +23,40 @@
         *)       EMOJI="🔵" ;;
     esac
 
-    TITLE_LINE=$(printf '%s' "$TITLE" | tr '\n' ' ' | sed 's/  */ /g; s/^ *//; s/ *$//')
+    # Read raw templates to know which fields are selected
+    TITLE_TMPL=$(sed -n 's/^TITLE=//p' "$0" | tail -1)
+    MESSAGE_TMPL=$(sed -n 's/^MESSAGE=//p' "$0" | tail -1)
+
+    # Helper: check if a field is included in the template
+    has_field() { echo "$1" | grep -q "$2"; }
+
+    # ── Build title with labels ──────────────────
+    TITLE_LINE=""
+    has_field "$TITLE_TMPL" '$EVENT'       && TITLE_LINE="${TITLE_LINE}[${EVENT}] "
+    has_field "$TITLE_TMPL" '$SUBJECT'     && TITLE_LINE="${TITLE_LINE}${SUBJECT}"
+    has_field "$TITLE_TMPL" '$TIMESTAMP'   && TITLE_LINE="${TITLE_LINE} (${TIMESTAMP})"
+    has_field "$TITLE_TMPL" '$DESCRIPTION' && TITLE_LINE="${TITLE_LINE} - ${DESCRIPTION}"
+    has_field "$TITLE_TMPL" '$IMPORTANCE'  && TITLE_LINE="${TITLE_LINE} [${IMPORTANCE}]"
+    has_field "$TITLE_TMPL" '$CONTENT'     && TITLE_LINE="${TITLE_LINE} | ${CONTENT}"
+    [ -z "$TITLE_LINE" ] && TITLE_LINE="${SUBJECT}"
+
+    # ── Build message with labels ────────────────
     NL=$'\n'
+    MSG=""
+    has_field "$MESSAGE_TMPL" '$EVENT'       && MSG="${MSG}> **事件**: ${EVENT}${NL}"
+    has_field "$MESSAGE_TMPL" '$SUBJECT'     && MSG="${MSG}> **主题**: ${SUBJECT}${NL}"
+    has_field "$MESSAGE_TMPL" '$TIMESTAMP'   && MSG="${MSG}> **时间**: ${TIMESTAMP}${NL}"
+    has_field "$MESSAGE_TMPL" '$DESCRIPTION' && MSG="${MSG}> **说明**: ${DESCRIPTION}${NL}"
+    has_field "$MESSAGE_TMPL" '$IMPORTANCE'  && MSG="${MSG}> **级别**: ${IMPORTANCE}${NL}"
+    has_field "$MESSAGE_TMPL" '$CONTENT'     && MSG="${MSG}> ${CONTENT}${NL}"
 
     CONTENT="## ${EMOJI} [${IMPORTANCE}] ${APP_NAME}${NL}> ${TITLE_LINE}"
 
-    if [ -n "$MESSAGE" ]; then
-        MSG_FORMATTED=$(printf '%s' "$MESSAGE" | sed '/^$/d; /./s/^/> /')
-        CONTENT="${CONTENT}${NL}${MSG_FORMATTED}"
+    if [ -n "$MSG" ]; then
+        CONTENT="${CONTENT}${NL}${MSG}"
     fi
 
-    if [ -n "$LINK" ]; then
-        CONTENT="${CONTENT}${NL}> [查看详情](${LINK})"
-    fi
+    has_field "$MESSAGE_TMPL" '$LINK' && [ -n "$LINK" ] && CONTENT="${CONTENT}> [查看详情](${LINK})${NL}"
 
     ESCAPED=$(printf '%s' "$CONTENT" | sed ':a;N;$!ba;s/\\/\\\\/g;s/"/\\"/g;s/\n/\\n/g')
     PAYLOAD="{\"msgtype\":\"markdown_v2\",\"markdown_v2\":{\"content\":\"${ESCAPED}\"}}"
