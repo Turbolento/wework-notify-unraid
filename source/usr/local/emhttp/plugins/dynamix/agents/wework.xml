@@ -14,7 +14,7 @@
     {0}
     ############
     # If this is a test run (EVENT=SUBJECT=DESCRIPTION all "X test."), fake real data
-    if [ "$EVENT" = "$SUBJECT" ] && [ "$SUBJECT" = "$DESCRIPTION" ]; then
+    if [ "$EVENT" = "WeWork test." ]; then
         EVENT="Array Start"
         SUBJECT="Array started successfully"
         DESCRIPTION="Array has been started successfully"
