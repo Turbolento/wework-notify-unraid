@@ -13,7 +13,7 @@
     ############
     {0}
     ############
-    # Expand \n sequences to actual newlines
+    # Expand \n sequences in config values to actual newlines
     TITLE=$(printf '%b' "$TITLE")
     MESSAGE=$(printf '%b' "$MESSAGE")
 
@@ -27,22 +27,24 @@
     # Title: collapse to single line
     TITLE_LINE=$(printf '%s' "$TITLE" | tr '\n' ' ' | sed 's/  */ /g; s/^ *//; s/ *$//')
 
-    # Build markdown content
-    CONTENT="## ${EMOJI} ${APP_NAME}"
-    CONTENT="${CONTENT}\n> <font color=\"${COLOR}\"><b>[${IMPORTANCE}]</b></font> ${TITLE_LINE}"
+    # Build content with actual newlines (use $'\n' so sed can later re-encode them for JSON)
+    NL=$'\n'
 
-    # Message body: add "> " prefix to each non-empty line
+    # Heading
+    CONTENT="## ${EMOJI} ${APP_NAME}${NL}> <font color=\"${COLOR}\"><b>[${IMPORTANCE}]</b></font> ${TITLE_LINE}"
+
+    # Message body: prefix each non-empty line with "> "
     if [ -n "$MESSAGE" ]; then
         MSG_FORMATTED=$(printf '%s' "$MESSAGE" | sed '/./s/^/> /')
-        CONTENT="${CONTENT}\n${MSG_FORMATTED}"
+        CONTENT="${CONTENT}${NL}${MSG_FORMATTED}"
     fi
 
     # Link
     if [ -n "$LINK" ]; then
-        CONTENT="${CONTENT}\n>\n> [查看详情](${LINK})"
+        CONTENT="${CONTENT}${NL}${NL}> [查看详情](${LINK})"
     fi
 
-    # JSON-encode: backslash, double-quote, then newlines to \n
+    # JSON-encode: escape \ and ", then convert real newlines to \n for JSON transport
     ESCAPED=$(printf '%s' "$CONTENT" | sed ':a;N;$!ba;s/\\/\\\\/g;s/"/\\"/g;s/\n/\\n/g')
     PAYLOAD="{\"msgtype\":\"markdown_v2\",\"markdown_v2\":{\"content\":\"${ESCAPED}\"}}"
 

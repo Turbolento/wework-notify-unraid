@@ -16,17 +16,17 @@ case "$IMPORTANCE" in
 esac
 
 TITLE_LINE=$(printf '%s' "$TITLE" | tr '\n' ' ' | sed 's/  */ /g; s/^ *//; s/ *$//')
+NL=$'\n'
 
-CONTENT="## ${EMOJI} ${APP_NAME}"
-CONTENT="${CONTENT}\n> <font color=\"${COLOR}\"><b>[${IMPORTANCE}]</b></font> ${TITLE_LINE}"
+CONTENT="## ${EMOJI} ${APP_NAME}${NL}> <font color=\"${COLOR}\"><b>[${IMPORTANCE}]</b></font> ${TITLE_LINE}"
 
 if [ -n "$MESSAGE" ]; then
     MSG_FORMATTED=$(printf '%s' "$MESSAGE" | sed '/./s/^/> /')
-    CONTENT="${CONTENT}\n${MSG_FORMATTED}"
+    CONTENT="${CONTENT}${NL}${MSG_FORMATTED}"
 fi
 
 if [ -n "$LINK" ]; then
-    CONTENT="${CONTENT}\n>\n> [查看详情](${LINK})"
+    CONTENT="${CONTENT}${NL}${NL}> [查看详情](${LINK})"
 fi
 
 ESCAPED=$(printf '%s' "$CONTENT" | sed ':a;N;$!ba;s/\\/\\\\/g;s/"/\\"/g;s/\n/\\n/g')
