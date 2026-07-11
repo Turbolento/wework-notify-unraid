@@ -5,35 +5,37 @@ APP_NAME="Unraid Server"
 TITLE="$SUBJECT"
 MESSAGE="$DESCRIPTION"
 ############
-TITLE=$(echo -e "$TITLE")
-MESSAGE=$(echo -e "$MESSAGE")
+TITLE=$(printf '%b' "$TITLE")
+MESSAGE=$(printf '%b' "$MESSAGE")
 
 case "$IMPORTANCE" in
-    normal)  EMOJI="🔵" ;;
-    warning) EMOJI="⚠️" ;;
-    alert)   EMOJI="🚨" ;;
-    *)       EMOJI="🔵" ;;
+    normal)  EMOJI="🔵" COLOR="info" ;;
+    warning) EMOJI="⚠️" COLOR="warning" ;;
+    alert)   EMOJI="🚨" COLOR="warning" ;;
+    *)       EMOJI="🔵" COLOR="info" ;;
 esac
 
-MD="## ${EMOJI} ${APP_NAME}\n> ${TITLE}"
+TITLE_LINE=$(printf '%s' "$TITLE" | tr '\n' ' ' | sed 's/  */ /g; s/^ *//; s/ *$//')
+
+CONTENT="## ${EMOJI} ${APP_NAME}"
+CONTENT="${CONTENT}\n> <font color=\"${COLOR}\"><b>[${IMPORTANCE}]</b></font> ${TITLE_LINE}"
 
 if [ -n "$MESSAGE" ]; then
-    MD="${MD}\n${MESSAGE}"
+    MSG_FORMATTED=$(printf '%s' "$MESSAGE" | sed '/./s/^/> /')
+    CONTENT="${CONTENT}\n${MSG_FORMATTED}"
 fi
 
 if [ -n "$LINK" ]; then
-    MD="${MD}\n> [查看详情](${LINK})"
+    CONTENT="${CONTENT}\n>\n> [查看详情](${LINK})"
 fi
 
-JSON=$(printf '%s' "$MD" | sed \
-    -e 's/\\/\\\\/g' \
-    -e 's/"/\\"/g' \
-    -e ':a' -e 'N' -e '$!ba' -e 's/\n/\\n/g')
+ESCAPED=$(printf '%s' "$CONTENT" | sed ':a;N;$!ba;s/\\/\\\\/g;s/"/\\"/g;s/\n/\\n/g')
+PAYLOAD="{\"msgtype\":\"markdown_v2\",\"markdown_v2\":{\"content\":\"${ESCAPED}\"}}"
 
 curl -s -X POST \
     -H "Content-Type: application/json" \
-    -d "{\"msgtype\":\"markdown_v2\",\"markdown_v2\":{\"content\":\"${JSON}\"}}" \
+    -d "$PAYLOAD" \
     --connect-timeout 5 --max-time 10 \
-    "$WEBH_URL" > /dev/null 2>/dev/null
+    "$WEBH_URL" > /dev/null 2>&1
 
 exit 0
