@@ -5,6 +5,15 @@ APP_NAME="Unraid Server"
 TITLE="$SUBJECT"
 MESSAGE="$DESCRIPTION"
 ############
+if [ "$EVENT" = "$SUBJECT" ] && [ "$SUBJECT" = "$DESCRIPTION" ]; then
+    EVENT="Array Start"
+    SUBJECT="Array started successfully"
+    DESCRIPTION="Array has been started"
+    CONTENT="All disks mounted normally. Parity is valid."
+    IMPORTANCE="normal"
+    TIMESTAMP="${TIMESTAMP:-$(date +%s)}"
+fi
+
 TITLE=$(printf '%b' "$TITLE")
 MESSAGE=$(printf '%b' "$MESSAGE")
 
@@ -26,16 +35,13 @@ if [ -n "$MESSAGE" ]; then
 fi
 
 if [ -n "$LINK" ]; then
-    CONTENT="${CONTENT}${NL}>${NL}> [查看详情](${LINK})"
+    CONTENT="${CONTENT}${NL}> [查看详情](${LINK})"
 fi
 
 ESCAPED=$(printf '%s' "$CONTENT" | sed ':a;N;$!ba;s/\\/\\\\/g;s/"/\\"/g;s/\n/\\n/g')
 PAYLOAD="{\"msgtype\":\"markdown_v2\",\"markdown_v2\":{\"content\":\"${ESCAPED}\"}}"
 
-curl -s -X POST \
-    -H "Content-Type: application/json" \
-    -d "$PAYLOAD" \
-    --connect-timeout 5 --max-time 10 \
-    "$WEBH_URL" > /dev/null 2>&1
+curl -s -X POST -H "Content-Type: application/json" -d "$PAYLOAD" \
+    --connect-timeout 5 --max-time 10 "$WEBH_URL" > /dev/null 2>&1
 
 exit 0

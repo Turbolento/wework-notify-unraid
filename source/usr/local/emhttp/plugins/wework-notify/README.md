@@ -5,15 +5,14 @@ Forward Unraid system notifications to WeWork (企业微信) group chats via web
 **Setup:**
 
 1. In WeWork group chat, add a webhook robot and copy the webhook URL
-2. Go to **Settings → WeWork Notify** and paste the webhook URL
-3. Click **Test Notification** to verify the connection
-4. Enable the agent in **Settings → Notification Settings**
-
-**Webhook URL format:**
-`https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=YOUR_KEY`
+2. Go to **Settings → Notification Settings → Notification Agents → WeWork**
+3. Set Agent function to **Enabled**
+4. Fill in your **WebHook URL** and **Application Name**
+5. Configure **Notification Title** and **Notification Message** field selections
+6. Click **Apply**, then **Test** to verify
 
 **Features:**
-- Forwards all Unraid notifications (array status, disk health, Docker events, etc.)
-- Markdown formatting with importance-based emoji indicators (🔵 normal / ⚠️ warning / 🚨 alert)
-- Zero dependencies (uses built-in curl)
-- Supports notification links for one-click navigation to the relevant Unraid page
+- All Unraid notifications (array, disks, Docker, VMs, system events)
+- Markdown_v2 format with importance emoji
+- Configurable title/message fields
+- Zero external dependencies
