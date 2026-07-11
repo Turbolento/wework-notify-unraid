@@ -2,28 +2,41 @@
 # WeWork Notification Agent for Unraid
 # Receives notification data via environment variables from Unraid's notify system
 # Sends to WeWork (企业微信) group chat via webhook using markdown_v2 format
+#
+# Config file: /boot/config/plugins/wework-notify/wework-notify.cfg
+# Log file:    /var/log/notify_wework
 
-# ── Guard: subject is required ──────────────────────────────────
-if [ -z "$SUBJECT" ]; then
-    exit 0
-fi
+SCRIPTNAME=$(basename "${0}")
+LOG="/var/log/notify_${SCRIPTNAME}"
 
-# ── Read webhook URL from config ────────────────────────────────
+# ── Quick test defaults (mimics notify script) ──────────────────
+[[ -z "${EVENT}"       ]] && EVENT='Unraid Status'
+[[ -z "${SUBJECT}"     ]] && SUBJECT='Notification'
+[[ -z "${DESCRIPTION}" ]] && DESCRIPTION='No description'
+[[ -z "${IMPORTANCE}"  ]] && IMPORTANCE='normal'
+[[ -z "${TIMESTAMP}"   ]] && TIMESTAMP=$(date +%s)
+
+# ── Read config ─────────────────────────────────────────────────
 CONFIG_FILE="/boot/config/plugins/wework-notify/wework-notify.cfg"
 if [ ! -f "$CONFIG_FILE" ]; then
     exit 0
 fi
-
-# Source the config file to get WEWORK_WEBHOOK_URL
 . "$CONFIG_FILE"
+
+# ── Check if enabled ────────────────────────────────────────────
+if [ "$USE_WEWORK" != "yes" ]; then
+    exit 0
+fi
 
 if [ -z "$WEWORK_WEBHOOK_URL" ]; then
     exit 0
 fi
 
-# ── Store message body under a different name to avoid ──────────
-# ── clashing with the MD_CONTENT variable we build below ────────
-MESSAGE_BODY="$CONTENT"
+# ── Default checkbox values ─────────────────────────────────────
+APP_NAME="${APP_NAME:-Unraid Server}"
+TITLE_SUBJECT="${TITLE_SUBJECT:-yes}"
+TITLE_DESCRIPTION="${TITLE_DESCRIPTION:-yes}"
+MESSAGE_DESCRIPTION="${MESSAGE_DESCRIPTION:-yes}"
 
 # ── Map importance to emoji ─────────────────────────────────────
 case "$IMPORTANCE" in
@@ -33,46 +46,91 @@ case "$IMPORTANCE" in
     *)       EMOJI="🔵" ;;
 esac
 
+# ── Helper: read checkbox field, return value if "yes" ──────────
+checked() {
+    local varname="$1"
+    local value="${!varname}"
+    if [ "$value" = "yes" ]; then
+        echo "$2"
+    fi
+}
+
+# ── Format timestamp ────────────────────────────────────────────
+FORMATTED_TIME=$(date -d @"${TIMESTAMP}" '+%Y-%m-%d %H:%M:%S' 2>/dev/null || date -r "${TIMESTAMP}" '+%Y-%m-%d %H:%M:%S' 2>/dev/null || echo '')
+
+# ── Build the notification title line ───────────────────────────
+TITLE_PARTS=""
+[ -n "$(checked TITLE_EVENT "${EVENT}")"            ] && TITLE_PARTS="${TITLE_PARTS}[${EVENT}] "
+[ -n "$(checked TITLE_SUBJECT "${SUBJECT}")"        ] && TITLE_PARTS="${TITLE_PARTS}${SUBJECT}"
+[ -n "$(checked TITLE_TIMESTAMP "${FORMATTED_TIME}")" ] && TITLE_PARTS="${TITLE_PARTS} (${FORMATTED_TIME})"
+[ -n "$(checked TITLE_DESCRIPTION "${DESCRIPTION}")" ] && TITLE_PARTS="${TITLE_PARTS} - ${DESCRIPTION}"
+[ -n "$(checked TITLE_IMPORTANCE "${IMPORTANCE}")"   ] && TITLE_PARTS="${TITLE_PARTS} [${IMPORTANCE}]"
+[ -n "$(checked TITLE_CONTENT "${CONTENT}")"          ] && TITLE_PARTS="${TITLE_PARTS} | ${CONTENT}"
+
+# If title is empty, use subject as fallback
+if [ -z "$TITLE_PARTS" ]; then
+    TITLE_PARTS="${SUBJECT}"
+fi
+
+# ── Build the message body ──────────────────────────────────────
+MSG_PARTS=""
+[ -n "$(checked MESSAGE_EVENT "${EVENT}")"               ] && MSG_PARTS="${MSG_PARTS}**事件**: ${EVENT}\n"
+[ -n "$(checked MESSAGE_SUBJECT "${SUBJECT}")"           ] && MSG_PARTS="${MSG_PARTS}**主题**: ${SUBJECT}\n"
+[ -n "$(checked MESSAGE_TIMESTAMP "${FORMATTED_TIME}")"  ] && MSG_PARTS="${MSG_PARTS}**时间**: ${FORMATTED_TIME}\n"
+[ -n "$(checked MESSAGE_DESCRIPTION "${DESCRIPTION}")"   ] && MSG_PARTS="${MSG_PARTS}**描述**: ${DESCRIPTION}\n"
+[ -n "$(checked MESSAGE_IMPORTANCE "${IMPORTANCE}")"     ] && MSG_PARTS="${MSG_PARTS}**级别**: ${IMPORTANCE}\n"
+[ -n "$(checked MESSAGE_CONTENT "${CONTENT}")"            ] && MSG_PARTS="${MSG_PARTS}${CONTENT}\n"
+
 # ── Build markdown_v2 content ───────────────────────────────────
-# Start with header: emoji + importance + subject
-MD_CONTENT="## ${EMOJI} [${IMPORTANCE:-normal}] ${SUBJECT}"
+MD_CONTENT="## ${EMOJI} ${APP_NAME}\n> ${TITLE_PARTS}"
 
-# Append event line if present
-if [ -n "$EVENT" ]; then
-    MD_CONTENT="${MD_CONTENT}\n> **事件**: ${EVENT}"
+if [ -n "$MSG_PARTS" ]; then
+    MD_CONTENT="${MD_CONTENT}\n${MSG_PARTS}"
 fi
 
-# Append description line if present
-if [ -n "$DESCRIPTION" ]; then
-    MD_CONTENT="${MD_CONTENT}\n> **描述**: ${DESCRIPTION}"
-fi
-
-# Append message body if present
-if [ -n "$MESSAGE_BODY" ]; then
-    MD_CONTENT="${MD_CONTENT}\n> ${MESSAGE_BODY}"
-fi
-
-# Append link if present
+# Append link if enabled and present
 if [ -n "$LINK" ]; then
-    MD_CONTENT="${MD_CONTENT}\n> [查看详情](${LINK})"
+    if [ "$(checked TITLE_LINK "")" != "" ] || [ "$(checked MESSAGE_LINK "")" != "" ]; then
+        MD_CONTENT="${MD_CONTENT}> [查看详情](${LINK})\n"
+    fi
 fi
 
-# ── JSON-escape the content string ──────────────────────────────
-# Escape backslash, double-quote, newline for JSON string
+# ── JSON-escape the content ─────────────────────────────────────
 JSON_CONTENT=$(printf '%s' "$MD_CONTENT" | sed \
     -e 's/\\/\\\\/g' \
     -e 's/"/\\"/g' \
     -e ':a' -e 'N' -e '$!ba' -e 's/\n/\\n/g')
 
-# ── Build and send the payload ──────────────────────────────────
+# ── Build payload ───────────────────────────────────────────────
 PAYLOAD="{\"msgtype\":\"markdown_v2\",\"markdown_v2\":{\"content\":\"${JSON_CONTENT}\"}}"
 
-curl -s -X POST \
-    -H "Content-Type: application/json" \
-    -d "$PAYLOAD" \
-    --connect-timeout 5 \
-    --max-time 10 \
-    "$WEWORK_WEBHOOK_URL" > /dev/null 2>&1
+# ── Send with retry ─────────────────────────────────────────────
+MAX=3
+for ((i = 1; i <= MAX; i++)); do
+    RET=$(curl -s -X POST \
+        -H "Content-Type: application/json" \
+        -d "$PAYLOAD" \
+        --connect-timeout 5 \
+        --max-time 10 \
+        "$WEWORK_WEBHOOK_URL" 2>&1)
 
-# Always exit 0 — never block the notification pipeline
+    # If nothing returned, message was sent successfully
+    [[ -z "$RET" ]] && break
+
+    # If response contains errcode=0, success
+    echo "$RET" | grep -q '"errcode":0' && break
+
+    # Log failure
+    {
+        date
+        echo "attempt ${i} of ${MAX} failed"
+        echo "$RET"
+    } >> "$LOG"
+
+    # If not rate-limited, don't retry
+    echo "$RET" | grep -q '"errcode":45009' || break
+
+    sleep 1
+done
+
 exit 0

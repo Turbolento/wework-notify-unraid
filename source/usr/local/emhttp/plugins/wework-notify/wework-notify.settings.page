@@ -7,18 +7,59 @@ Tag="notification"
 $plugin = "wework-notify";
 $cfg = parse_plugin_cfg($plugin);
 $csrf_token = $var['csrf_token'] ?? '';
+
+// Defaults for new install
+$use_wework      = $cfg['USE_WEWORK']           ?? 'no';
+$app_name        = $cfg['APP_NAME']             ?? 'Unraid Server';
+$webhook_url     = $cfg['WEWORK_WEBHOOK_URL']   ?? '';
+$title_event     = $cfg['TITLE_EVENT']          ?? 'no';
+$title_subject   = $cfg['TITLE_SUBJECT']        ?? 'yes';
+$title_timestamp = $cfg['TITLE_TIMESTAMP']      ?? 'no';
+$title_desc      = $cfg['TITLE_DESCRIPTION']    ?? 'yes';
+$title_important = $cfg['TITLE_IMPORTANCE']     ?? 'no';
+$title_content   = $cfg['TITLE_CONTENT']        ?? 'no';
+$title_link      = $cfg['TITLE_LINK']           ?? 'no';
+$msg_event       = $cfg['MESSAGE_EVENT']        ?? 'no';
+$msg_subject     = $cfg['MESSAGE_SUBJECT']      ?? 'no';
+$msg_timestamp   = $cfg['MESSAGE_TIMESTAMP']    ?? 'no';
+$msg_desc        = $cfg['MESSAGE_DESCRIPTION']  ?? 'yes';
+$msg_important   = $cfg['MESSAGE_IMPORTANCE']   ?? 'no';
+$msg_content     = $cfg['MESSAGE_CONTENT']      ?? 'no';
+$msg_link        = $cfg['MESSAGE_LINK']         ?? 'no';
 ?>
 
 <form markdown="1" method="POST" action="/update.php" target="progressFrame">
 <input type="hidden" name="#file" value="<?=$plugin?>/<?=$plugin?>.cfg">
 
-_(Webhook URL)_:
-: <input type="text" name="WEWORK_WEBHOOK_URL" value="<?=htmlspecialchars($cfg['WEWORK_WEBHOOK_URL'] ?? '')?>" placeholder="https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=...">
+_(Enable WeWork Notify)_:
+: <select name="USE_WEWORK" size="1">
+  <option value="yes" <?=$use_wework=='yes'?'selected':''?>>_(Yes)_</option>
+  <option value="no"  <?=$use_wework=='no'?'selected':''?>>_(No)_</option>
+</select>
 
-<blockquote class="inline_help">
-Copy the webhook URL from your WeWork group chat robot settings.
-Format: <code>https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=YOUR_KEY</code>
-</blockquote>
+_(Application name)_:
+: <input type="text" name="APP_NAME" value="<?=htmlspecialchars($app_name)?>" placeholder="Unraid Server">
+
+_(Webhook URL)_:
+: <input type="text" name="WEWORK_WEBHOOK_URL" value="<?=htmlspecialchars($webhook_url)?>" placeholder="https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=...">
+
+_(Notification title)_:
+: <input type="checkbox" name="TITLE_EVENT"     value="yes" <?=$title_event=='yes'?'checked':''?>>_(Event)_
+: <input type="checkbox" name="TITLE_SUBJECT"   value="yes" <?=$title_subject=='yes'?'checked':''?>>_(Subject)_ _(default)_
+: <input type="checkbox" name="TITLE_TIMESTAMP" value="yes" <?=$title_timestamp=='yes'?'checked':''?>>_(Timestamp)_
+: <input type="checkbox" name="TITLE_DESCRIPTION" value="yes" <?=$title_desc=='yes'?'checked':''?>>_(Description)_
+: <input type="checkbox" name="TITLE_IMPORTANCE" value="yes" <?=$title_important=='yes'?'checked':''?>>_(Importance)_
+: <input type="checkbox" name="TITLE_CONTENT" value="yes" <?=$title_content=='yes'?'checked':''?>>_(Content)_
+: <input type="checkbox" name="TITLE_LINK"    value="yes" <?=$title_link=='yes'?'checked':''?>>_(Link)_
+
+_(Notification message)_:
+: <input type="checkbox" name="MESSAGE_EVENT"     value="yes" <?=$msg_event=='yes'?'checked':''?>>_(Event)_
+: <input type="checkbox" name="MESSAGE_SUBJECT"   value="yes" <?=$msg_subject=='yes'?'checked':''?>>_(Subject)_
+: <input type="checkbox" name="MESSAGE_TIMESTAMP" value="yes" <?=$msg_timestamp=='yes'?'checked':''?>>_(Timestamp)_
+: <input type="checkbox" name="MESSAGE_DESCRIPTION" value="yes" <?=$msg_desc=='yes'?'checked':''?>>_(Description)_ _(default)_
+: <input type="checkbox" name="MESSAGE_IMPORTANCE" value="yes" <?=$msg_important=='yes'?'checked':''?>>_(Importance)_
+: <input type="checkbox" name="MESSAGE_CONTENT" value="yes" <?=$msg_content=='yes'?'checked':''?>>_(Content)_
+: <input type="checkbox" name="MESSAGE_LINK"    value="yes" <?=$msg_link=='yes'?'checked':''?>>_(Link)_
 
 <hr>
 
