@@ -2,7 +2,7 @@
 <!DOCTYPE PLUGIN [
 <!ENTITY name "wework-notify">
 <!ENTITY author "Turbolento">
-<!ENTITY version "2026.07.19">
+<!ENTITY version "2026.07.20">
 <!ENTITY launch "Settings/Notifications">
 <!ENTITY pluginURL "https://raw.githubusercontent.com/Turbolento/wework-notify-unraid/master/wework-notify.plg">
 <!ENTITY packageURL "https://raw.githubusercontent.com/Turbolento/wework-notify-unraid/master/release/wework-notify.txz">
@@ -54,8 +54,16 @@ rm -f /usr/local/emhttp/plugins/&name;/wework-notify.settings.page
 rm -f /usr/local/emhttp/plugins/&name;/test.php
 rm -f /usr/local/emhttp/plugins/&name;/default.cfg
 rm -f /boot/config/plugins/&name;/&name;.cfg
-# Note: no initial .sh file -- the Notification Agents page creates it on first Apply.
-# This keeps the UI clean (no Delete button until user explicitly creates the agent).
+# Regenerate .sh files (preserves user config, updates script body)
+# Uses pre-built script body from package to avoid CDATA/sed/XML issues
+for AGENT_FILE in /boot/config/plugins/dynamix/notifications/agents/wework.sh \
+                  /boot/config/plugins/dynamix/notifications/agents-disabled/wework.sh; do
+    if [ -f "$AGENT_FILE" ]; then
+        CONFIG=$(sed -n '/^############$/,/^############$/p' "$AGENT_FILE" | grep -v '^############$')
+        { echo '#!/bin/bash'; echo '############'; echo "$CONFIG"; echo '############'; echo ''; cat /usr/local/emhttp/plugins/&name;/wework.sh.body; } > "$AGENT_FILE"
+        chmod +x "$AGENT_FILE"
+    fi
+done
 
 echo ""
 echo "-----------------------------------------------------------"
