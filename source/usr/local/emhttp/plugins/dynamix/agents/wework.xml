@@ -13,23 +13,6 @@
     ############
     {0}
     ############
-    # If this is a test run (EVENT=SUBJECT=DESCRIPTION all "X test."), fake real data
-    if [ "$EVENT" = "WeWork test." ]; then
-        EVENT="Array Start"
-        SUBJECT="Array started successfully"
-        DESCRIPTION="Array has been started successfully"
-        CONTENT="All disks mounted normally. Parity is valid."
-        IMPORTANCE="normal"
-        TIMESTAMP="${TIMESTAMP:-$(date +%s)}"
-        # Re-evaluate TITLE/MESSAGE from raw config templates with fake vars
-        # (they were expanded with old env values during config sourcing)
-        TITLE_TMPL=$(sed -n 's/^TITLE=//p' "$0" | tail -1)
-        MESSAGE_TMPL=$(sed -n 's/^MESSAGE=//p' "$0" | tail -1)
-        [ -n "$TITLE_TMPL" ] && TITLE=$(eval echo -e "$TITLE_TMPL")
-        [ -n "$MESSAGE_TMPL" ] && MESSAGE=$(eval echo -e "$MESSAGE_TMPL")
-    fi
-
-    # Expand \n sequences to actual newlines
     TITLE=$(printf '%b' "$TITLE")
     MESSAGE=$(printf '%b' "$MESSAGE")
 
@@ -40,32 +23,20 @@
         *)       EMOJI="🔵" ;;
     esac
 
-    # Format timestamp if present
-    if [ -n "$TIMESTAMP" ]; then
-        TS=$(date -d @"${TIMESTAMP}" '+%Y-%m-%d %H:%M:%S' 2>/dev/null || date -r "${TIMESTAMP}" '+%Y-%m-%d %H:%M:%S' 2>/dev/null || echo '')
-        [ -n "$TS" ] && TIMESTAMP="$TS"
-    fi
-
-    # Title: collapse to single line
     TITLE_LINE=$(printf '%s' "$TITLE" | tr '\n' ' ' | sed 's/  */ /g; s/^ *//; s/ *$//')
-
     NL=$'\n'
 
-    # Build markdown_v2 content
     CONTENT="## ${EMOJI} [${IMPORTANCE}] ${APP_NAME}${NL}> ${TITLE_LINE}"
 
-    # Message body: prefix each non-empty line with "> " (continuous green bar)
     if [ -n "$MESSAGE" ]; then
         MSG_FORMATTED=$(printf '%s' "$MESSAGE" | sed '/./s/^/> /')
         CONTENT="${CONTENT}${NL}${MSG_FORMATTED}"
     fi
 
-    # Link (no blank line between to keep quote bar continuous)
     if [ -n "$LINK" ]; then
         CONTENT="${CONTENT}${NL}> [查看详情](${LINK})"
     fi
 
-    # JSON-encode
     ESCAPED=$(printf '%s' "$CONTENT" | sed ':a;N;$!ba;s/\\/\\\\/g;s/"/\\"/g;s/\n/\\n/g')
     PAYLOAD="{\"msgtype\":\"markdown_v2\",\"markdown_v2\":{\"content\":\"${ESCAPED}\"}}"
 
