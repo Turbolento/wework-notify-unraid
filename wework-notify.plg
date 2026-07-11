@@ -2,11 +2,11 @@
 <!DOCTYPE PLUGIN [
 <!ENTITY name "wework-notify">
 <!ENTITY author "Turbolento">
-<!ENTITY version "2026.07.11b">
+<!ENTITY version "2026.07.12">
 <!ENTITY launch "Settings/Notifications">
 <!ENTITY pluginURL "https://raw.githubusercontent.com/Turbolento/wework-notify-unraid/master/wework-notify.plg">
 <!ENTITY packageURL "https://raw.githubusercontent.com/Turbolento/wework-notify-unraid/master/release/wework-notify.txz">
-<!ENTITY packageMD5 "b8759b626a46863e569568c72be40d27">
+<!ENTITY packageMD5 "edf8aa23726621e1ae83c59ea5c80084">
 <!ENTITY source "/boot/config/plugins/&name;/&name;">
 ]>
 <PLUGIN name="&name;" author="&author;" version="&version;" launch="&launch;" pluginURL="&pluginURL;" icon="wework-notify.png" min="6.12.0" support="https://forums.unraid.net/" project="https://github.com/Turbolento/wework-notify-unraid">
@@ -15,11 +15,17 @@
 ## WeWork Notification Agent for Unraid
 
 ###&version;
-- Initial release
-- Forwards Unraid system notifications to WeWork (企业微信) via webhook
-- Supports markdown_v2 format with importance-based emoji indicators
+- Architecture: XML-based agent definition (native integration with Notification Agents page)
+- Configurable via Settings → Notification Settings → Notification Agents → WeWork
+- Supports title/message field selection (Event, Subject, Timestamp, Description, Importance, Content, Link)
+- Markdown_v2 format with importance emoji (🔵 normal / ⚠️ warning / 🚨 alert)
 - Zero dependencies (curl-based)
-- Settings page with webhook URL configuration and test button
+
+###2026.07.11b
+- Settings page matching built-in agent format
+
+###2026.07.11
+- Initial release
 </CHANGES>
 
 <!-- PRE-INSTALL: create directories -->
@@ -37,16 +43,60 @@ mkdir -p /boot/config/plugins/dynamix/notifications/agents-disabled
 <MD5>&packageMD5;</MD5>
 </FILE>
 
-<!-- POST-INSTALL: deploy agent script -->
+<!-- POST-INSTALL: create initial disabled agent -->
 <FILE Run="/bin/bash">
 <INLINE>
-# Copy agent script to notification agents directory
-cp /usr/local/emhttp/plugins/&name;/agent/wework /boot/config/plugins/dynamix/notifications/agents/wework
-chmod +x /boot/config/plugins/dynamix/notifications/agents/wework
+AGENT_ENABLED="/boot/config/plugins/dynamix/notifications/agents/wework.sh"
+AGENT_DISABLED="/boot/config/plugins/dynamix/notifications/agents-disabled/wework.sh"
+AGENT_XML="/usr/local/emhttp/plugins/dynamix/agents/wework.xml"
 
-# Initialize user config from default if not present
-if [ ! -f /boot/config/plugins/&name;/&name;.cfg ]; then
-    cp /usr/local/emhttp/plugins/&name;/default.cfg /boot/config/plugins/&name;/&name;.cfg
+# If the agent was previously installed via old mechanism, clean it up
+rm -f /boot/config/plugins/dynamix/notifications/agents/wework
+
+# Create initial disabled agent if neither enabled nor disabled exists
+if [ ! -f "$AGENT_ENABLED" ] && [ ! -f "$AGENT_DISABLED" ]; then
+    cat > "$AGENT_DISABLED" << 'AGENTEOF'
+#!/bin/bash
+############
+WEBH_URL="USE YOUR OWN WEBHOOK VALUE HERE"
+APP_NAME="Unraid Server"
+TITLE="$SUBJECT"
+MESSAGE="$DESCRIPTION"
+############
+TITLE=$(echo -e "$TITLE")
+MESSAGE=$(echo -e "$MESSAGE")
+
+case "$IMPORTANCE" in
+    normal)  EMOJI="🔵" ;;
+    warning) EMOJI="⚠️" ;;
+    alert)   EMOJI="🚨" ;;
+    *)       EMOJI="🔵" ;;
+esac
+
+MD="## ${EMOJI} ${APP_NAME}\n> ${TITLE}"
+
+if [ -n "$MESSAGE" ]; then
+    MD="${MD}\n${MESSAGE}"
+fi
+
+if [ -n "$LINK" ]; then
+    MD="${MD}\n> [查看详情](${LINK})"
+fi
+
+JSON=$(printf '%s' "$MD" | sed \
+    -e 's/\\/\\\\/g' \
+    -e 's/"/\\"/g' \
+    -e ':a' -e 'N' -e '$!ba' -e 's/\n/\\n/g')
+
+curl -s -X POST \
+    -H "Content-Type: application/json" \
+    -d "{\"msgtype\":\"markdown_v2\",\"markdown_v2\":{\"content\":\"${JSON}\"}}" \
+    --connect-timeout 5 --max-time 10 \
+    "$WEBH_URL" > /dev/null 2>&1
+
+exit 0
+AGENTEOF
+    chmod +x "$AGENT_DISABLED"
 fi
 
 echo ""
@@ -54,9 +104,11 @@ echo "-----------------------------------------------------------"
 echo " WeWork Notification Agent has been installed."
 echo " Version: &version;"
 echo ""
-echo " 1. Go to Settings → WeWork Notify"
-echo " 2. Enter your WeWork webhook URL"
-echo " 3. Click 'Test Notification' to verify"
+echo " 1. Go to Settings → Notification Settings → Notification Agents"
+echo " 2. Find 'WeWork' in the list"
+echo " 3. Set Agent function to 'Enabled'"
+echo " 4. Fill in your WebHook URL and click Apply"
+echo " 5. Use 'Test' button to verify"
 echo "-----------------------------------------------------------"
 echo ""
 </INLINE>
@@ -68,9 +120,17 @@ echo ""
 # Remove installed package
 removepkg &name; 2>/dev/null
 
-# Remove agent scripts
+# Remove agent scripts (both .sh and extensionless formats)
+rm -f /boot/config/plugins/dynamix/notifications/agents/wework.sh
 rm -f /boot/config/plugins/dynamix/notifications/agents/wework
+rm -f /boot/config/plugins/dynamix/notifications/agents-disabled/wework.sh
 rm -f /boot/config/plugins/dynamix/notifications/agents-disabled/wework
+
+# Remove XML definition
+rm -f /usr/local/emhttp/plugins/dynamix/agents/wework.xml
+
+# Remove icon
+rm -f /usr/local/emhttp/plugins/dynamix/icons/wework.png
 
 echo ""
 echo "-----------------------------------------------------------"
