@@ -6,7 +6,7 @@
 <!ENTITY launch "Settings/Notifications">
 <!ENTITY pluginURL "https://raw.githubusercontent.com/Turbolento/wework-notify-unraid/master/wework-notify.plg">
 <!ENTITY packageURL "https://raw.githubusercontent.com/Turbolento/wework-notify-unraid/master/release/wework-notify.txz">
-<!ENTITY packageMD5 "11f90c480836e6765f0f45b08666489d">
+<!ENTITY packageMD5 "9dd45a52a57acd2f2620d38b63c40836">
 <!ENTITY source "/boot/config/plugins/&name;/&name;">
 ]>
 <PLUGIN name="&name;" author="&author;" version="&version;" launch="&launch;" pluginURL="&pluginURL;" icon="wework-notify.png" min="6.12.0" support="https://forums.unraid.net/" project="https://github.com/Turbolento/wework-notify-unraid">
@@ -50,8 +50,12 @@ AGENT_ENABLED="/boot/config/plugins/dynamix/notifications/agents/wework.sh"
 AGENT_DISABLED="/boot/config/plugins/dynamix/notifications/agents-disabled/wework.sh"
 AGENT_XML="/usr/local/emhttp/plugins/dynamix/agents/wework.xml"
 
-# If the agent was previously installed via old mechanism, clean it up
+# Clean up old v1/v2 files from previous installs
 rm -f /boot/config/plugins/dynamix/notifications/agents/wework
+rm -f /usr/local/emhttp/plugins/&name;/wework-notify.settings.page
+rm -f /usr/local/emhttp/plugins/&name;/test.php
+rm -f /usr/local/emhttp/plugins/&name;/default.cfg
+rm -f /boot/config/plugins/&name;/&name;.cfg
 
 # Create initial disabled agent if neither enabled nor disabled exists
 if [ ! -f "$AGENT_ENABLED" -a ! -f "$AGENT_DISABLED" ]; then
