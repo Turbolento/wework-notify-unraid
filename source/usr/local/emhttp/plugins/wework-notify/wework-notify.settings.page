@@ -1,4 +1,4 @@
-Menu="Settings"
+Menu="Notifications:4"
 Title="WeWork Notify"
 Icon="wechat"
 Tag="notification"
@@ -6,6 +6,7 @@ Tag="notification"
 <?php
 $plugin = "wework-notify";
 $cfg = parse_plugin_cfg($plugin);
+$csrf_token = $var['csrf_token'] ?? '';
 ?>
 
 <form markdown="1" method="POST" action="/update.php" target="progressFrame">
@@ -54,7 +55,7 @@ function testNotification() {
     xhr.onerror = function() {
         document.getElementById('testResult').innerHTML = '<span style="color:#d13438;">Network error - check webhook URL</span>';
     };
-    xhr.send('url=' + encodeURIComponent(url));
+    xhr.send('url=' + encodeURIComponent(url) + '&csrf_token=<?=$csrf_token?>');
 }
 </script>
 
