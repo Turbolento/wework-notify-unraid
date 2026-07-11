@@ -2,7 +2,7 @@
 <!DOCTYPE PLUGIN [
 <!ENTITY name "wework-notify">
 <!ENTITY author "Turbolento">
-<!ENTITY version "2026.07.30">
+<!ENTITY version "2026.07.31">
 <!ENTITY launch "Settings/Notifications">
 <!ENTITY pluginURL "https://raw.githubusercontent.com/Turbolento/wework-notify-unraid/master/wework-notify.plg">
 <!ENTITY packageURL "https://raw.githubusercontent.com/Turbolento/wework-notify-unraid/master/release/wework-notify.txz">
@@ -28,12 +28,14 @@ mkdir -p /boot/config/plugins/dynamix/notifications/agents-disabled
 </INLINE>
 </FILE>
 
-<FILE Name="&source;.txz" Run="upgradepkg --reinstall">
+<FILE Name="&source;.txz" Run="upgradepkg --install-new --reinstall">
 <URL>&packageURL;</URL>
 </FILE>
 
 <FILE Run="/bin/bash">
 <INLINE>
+# Force-extract key files from .txz (upgradepkg skips same-version packages)
+tar -xJf /boot/config/plugins/wework-notify/wework-notify.txz -C / usr/local/emhttp/plugins/dynamix/agents/wework.xml usr/local/emhttp/plugins/dynamix/icons/wework.png 2>/dev/null
 # Clean old formats
 rm -f /boot/config/plugins/dynamix/notifications/agents/wework
 rm -f /boot/config/plugins/dynamix/notifications/agents/wework.sh
