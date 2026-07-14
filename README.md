@@ -2,6 +2,8 @@
 
 将 Unraid 系统通知转发到企业微信群聊。
 
+![IMG_5903(20260714-160157)](./README.assets/IMG_5903(20260714-160157).PNG)
+
 ## 安装
 
 在 Unraid Web UI 中：**Plugins → Install Plugin** → 粘贴：
@@ -10,20 +12,18 @@
 https://raw.githubusercontent.com/Turbolento/wework-notify-unraid/master/wework-notify.plg
 ```
 
-### 如果 Web UI 安装无响应
+### 手动CLI安装
 
-HTTP 代理缓存导致。用 SOCKS5 代理下载后本地安装：
+进入unraid命令行，执行如下命令：
 
 ```bash
 plugin remove wework-notify.plg 2>/dev/null
 rm -f /var/log/plugins/wework-notify.*
 
-curl -s --proxy socks5://172.16.1.5:7890 \
-  "https://raw.githubusercontent.com/Turbolento/wework-notify-unraid/master/wework-notify.plg" \
+curl -s "https://raw.githubusercontent.com/Turbolento/wework-notify-unraid/master/wework-notify.plg" \
   -o /boot/config/plugins/wework-notify.plg
 
-curl -s --proxy socks5://172.16.1.5:7890 \
-  "https://raw.githubusercontent.com/Turbolento/wework-notify-unraid/master/release/wework-notify.txz" \
+curl -s "https://raw.githubusercontent.com/Turbolento/wework-notify-unraid/master/release/wework-notify.txz" \
   -o /boot/config/plugins/wework-notify/wework-notify.txz
 
 plugin install /boot/config/plugins/wework-notify.plg
