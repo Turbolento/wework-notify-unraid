@@ -2,7 +2,7 @@
 
 将 Unraid 系统通知转发到企业微信群聊。
 
-![IMG_5903(20260714-160157)](./README.assets/IMG_5903(20260714-160157).PNG)
+<img src="./README.assets/image-20260714161603379.png" alt="image-20260714161603379" style="zoom:50%;" /><img src="./README.assets/IMG_5903(20260714-160157).PNG" alt="IMG_5903(20260714-160157)" style="zoom:25%;" />
 
 ## 安装
 
